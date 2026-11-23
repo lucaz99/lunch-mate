@@ -60,8 +60,15 @@ export function scoreMenus(
     }
   }
 
+  // 김치찌개 계열은 No픽에서도 먹을 수 있어 제외 대상에서 예외 처리
+  const noPickAllowedIds = new Set([
+    'kimchi-jjigae',
+    'spot-gangsunja',
+    'spot-manbok-sikdang',
+  ]);
+
   const filtered = menus.filter((menu) => {
-    if (context.noPickActive) {
+    if (context.noPickActive && !noPickAllowedIds.has(menu.id)) {
       if (
         menu.id === 'malatang' ||
         menu.id === 'spot-hyundaiok' ||
