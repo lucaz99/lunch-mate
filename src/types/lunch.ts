@@ -45,6 +45,9 @@ export interface MenuItem {
   kcalApprox: number;
   isFavoriteSpot?: boolean;
   signatureMenus?: string[];
+  lat?: number;
+  lon?: number;
+  address?: string;
 }
 
 export interface LunchContext {

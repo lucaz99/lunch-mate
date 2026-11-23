@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Star } from 'lucide-react';
 import { ContextControls } from './components/ContextControls';
-import { FavoriteSpotsSidebar } from './components/FavoriteSpotsSidebar';
+import {
+  FavoriteSpotsSidebar,
+  SyncStatus,
+} from './components/FavoriteSpotsSidebar';
 import { Header } from './components/Header';
 import { LunchHistoryPanel } from './components/LunchHistoryPanel';
 import { RandomPicker } from './components/RandomPicker';
@@ -12,6 +15,12 @@ import {
   LOCATION_PRESETS,
 } from './data/menus';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import {
+  addSharedFavoriteSpot,
+  deleteSharedFavoriteSpot,
+  fetchSharedFavoriteSpots,
+  subscribeSharedFavoriteSpots,
+} from './services/supabaseSpots';
 import {
   fetchOpenMeteoWeather,
   formatWeatherSummary,
@@ -50,6 +59,7 @@ export function App() {
     'lunchmate_custom_spots_v1',
     []
   );
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('loading');
   const [disabledSpotIds, setDisabledSpotIds] = useLocalStorage<string[]>(
     'lunchmate_disabled_spots_v1',
     []
@@ -120,6 +130,26 @@ export function App() {
   useEffect(() => {
     loadWeatherForCoords(DEFAULT_PRESET.lat, DEFAULT_PRESET.lon);
   }, [loadWeatherForCoords]);
+
+  const syncSharedSpots = useCallback(async () => {
+    setSyncStatus('loading');
+    try {
+      const remoteSpots = await fetchSharedFavoriteSpots();
+      setCustomSpots(remoteSpots);
+      setSyncStatus('synced');
+    } catch {
+      setSyncStatus('offline');
+    }
+  }, [setCustomSpots]);
+
+  // Initial load + Supabase Realtime subscription for team-shared spots
+  useEffect(() => {
+    void syncSharedSpots();
+    const unsubscribe = subscribeSharedFavoriteSpots(() => {
+      void syncSharedSpots();
+    });
+    return unsubscribe;
+  }, [syncSharedSpots]);
 
   const handleRequestGps = useCallback(() => {
     if (!navigator.geolocation) {
@@ -272,18 +302,39 @@ export function App() {
   );
 
   const handleAddCustomSpot = useCallback(
-    (spot: MenuItem) => {
-      setCustomSpots((prev) => [...prev, spot]);
-      showToast(`⭐ '${spot.name}'을(를) 기본 확정 식당에 추가했어요!`);
+    async (spot: MenuItem) => {
+      // Optimistic local update
+      setCustomSpots((prev) => [spot, ...prev.filter((s) => s.id !== spot.id)]);
+      try {
+        const saved = await addSharedFavoriteSpot(spot);
+        setCustomSpots((prev) => [
+          saved,
+          ...prev.filter((s) => s.id !== spot.id && s.id !== saved.id),
+        ]);
+        setSyncStatus('synced');
+        showToast(`⭐ '${spot.name}'을(를) 팀 전체에 실시간 동기화했어요!`);
+      } catch {
+        setSyncStatus('offline');
+        showToast(
+          `⭐ '${spot.name}'을(를) 내 브라우저에 저장했어요 (서버 연결 재시도 필요).`
+        );
+      }
     },
     [setCustomSpots, showToast]
   );
 
   const handleRemoveCustomSpot = useCallback(
-    (id: string) => {
+    async (id: string) => {
       setCustomSpots((prev) => prev.filter((s) => s.id !== id));
       setDisabledSpotIds((prev) => prev.filter((item) => item !== id));
-      showToast('직접 등록한 식당을 목록에서 삭제했어요.');
+      try {
+        await deleteSharedFavoriteSpot(id);
+        setSyncStatus('synced');
+        showToast('팀 공유 목록에서 해당 식당을 삭제했어요.');
+      } catch {
+        setSyncStatus('offline');
+        showToast('로컬 목록에서 삭제했어요 (서버 동기화 실패).');
+      }
     },
     [setCustomSpots, setDisabledSpotIds, showToast]
   );
@@ -417,6 +468,10 @@ export function App() {
             disabledSpotIds={disabledSpotIds}
             todayConfirmedMenuId={todayConfirmedMenuId}
             locationName={location.name}
+            locationLat={location.lat}
+            locationLon={location.lon}
+            syncStatus={syncStatus}
+            onRefreshSync={() => void syncSharedSpots()}
             onToggleSpotEnabled={handleToggleSpotEnabled}
             onConfirmSpot={handleConfirmMenu}
             onAddCustomSpot={handleAddCustomSpot}

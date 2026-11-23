@@ -157,10 +157,41 @@ export function buildNaverMapUrl(
 export function buildKakaoMapUrl(
   locationName: string,
   keyword: string,
-  isSpecificSpot?: boolean
+  isSpecificSpot?: boolean,
+  coords?: { lat?: number; lon?: number; label?: string }
 ): string {
+  if (coords?.lat !== undefined && coords?.lon !== undefined) {
+    const pinName = (coords.label || keyword).trim();
+    return `https://map.kakao.com/link/map/${encodeURIComponent(pinName)},${coords.lat.toFixed(6)},${coords.lon.toFixed(6)}`;
+  }
   const query = buildMapQuery(locationName, keyword, isSpecificSpot);
   return `https://map.kakao.com/link/search/${encodeURIComponent(query)}`;
+}
+
+export function haversineDistanceMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+export function formatDistanceKorean(meters: number): string {
+  if (meters < 1000) {
+    return `${meters}m`;
+  }
+  return `${(meters / 1000).toFixed(1)}km`;
 }
 
 export function formatWeatherSummary(
