@@ -1,20 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Star } from 'lucide-react';
+import { CheckCircle2, Star, User, Vote, X } from 'lucide-react';
 import { ContextControls } from './components/ContextControls';
 import {
   FavoriteSpotsSidebar,
+  SidebarTab,
   SyncStatus,
 } from './components/FavoriteSpotsSidebar';
 import { Header } from './components/Header';
 import { LunchHistoryPanel } from './components/LunchHistoryPanel';
 import { RandomPicker } from './components/RandomPicker';
 import { RecommendationSection } from './components/RecommendationSection';
+import { ReviewModal } from './components/ReviewModal';
 import {
   FAVORITE_SPOTS,
   GENERAL_MENUS,
   LOCATION_PRESETS,
 } from './data/menus';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import {
+  aggregateDailyVotes,
+  buildRatingSummaryMap,
+  castDailyVote,
+  clearDailyVotes,
+  createLunchReview,
+  deleteLunchReview,
+  fetchDailyVotes,
+  fetchLunchReviews,
+  removeDailyVote,
+  subscribeCommunityUpdates,
+  updateLunchReview,
+} from './services/supabaseCommunity';
 import {
   addSharedFavoriteSpot,
   deleteSharedFavoriteSpot,
@@ -28,12 +43,18 @@ import {
 } from './services/weatherAndLocation';
 import {
   ActiveTab,
+  AggregatedPollCandidate,
+  CommunityItemType,
+  DailyVoteRecord,
   LiveWeatherData,
   LocationPreset,
   LocationState,
   LunchContext,
   LunchHistoryEntry,
+  LunchReviewRecord,
+  MenuCategory,
   MenuItem,
+  ReviewDraftTarget,
   ScoredMenu,
 } from './types/lunch';
 import {
@@ -44,12 +65,47 @@ import {
 
 const DEFAULT_PRESET = LOCATION_PRESETS[0]; // 서울 강서구 화곡로 372
 
+interface VoteTargetInput {
+  itemId: string;
+  itemName: string;
+  itemEmoji: string;
+  itemCategory: MenuCategory;
+  itemType: CommunityItemType;
+}
+
+function generateClientId(): string {
+  return `member-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export function App() {
   const autoWeekendDetected = useMemo(() => isYesterdayWeekend(), []);
+  const todayStr = getTodayDateString();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommend');
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('spots');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Persistent local identity (no login required)
+  const [memberId] = useLocalStorage<string>(
+    'lunchmate_member_id_v1',
+    generateClientId()
+  );
+  const [memberNickname, setMemberNickname] = useLocalStorage<string>(
+    'lunchmate_member_nickname_v1',
+    ''
+  );
+
+  // Pending vote prompt if user votes before setting nickname
+  const [pendingVoteTarget, setPendingVoteTarget] =
+    useState<VoteTargetInput | null>(null);
+  const [nickModalInput, setNickModalInput] = useState('');
+
+  // Review modal state
+  const [reviewTarget, setReviewTarget] = useState<ReviewDraftTarget | null>(
+    null
+  );
+  const [reviewJustConfirmed, setReviewJustConfirmed] = useState(false);
 
   const [history, setHistory] = useLocalStorage<LunchHistoryEntry[]>(
     'lunchmate_history_v1',
@@ -64,6 +120,10 @@ export function App() {
     'lunchmate_disabled_spots_v1',
     []
   );
+
+  // Live Supabase community state (votes & reviews)
+  const [dailyVotes, setDailyVotes] = useState<DailyVoteRecord[]>([]);
+  const [reviews, setReviews] = useState<LunchReviewRecord[]>([]);
 
   const [location, setLocation] = useState<LocationState>({
     lat: DEFAULT_PRESET.lat,
@@ -126,7 +186,6 @@ export function App() {
     }
   }, []);
 
-  // Fetch initial weather for default location on mount
   useEffect(() => {
     loadWeatherForCoords(DEFAULT_PRESET.lat, DEFAULT_PRESET.lon);
   }, [loadWeatherForCoords]);
@@ -142,14 +201,43 @@ export function App() {
     }
   }, [setCustomSpots]);
 
-  // Initial load + Supabase Realtime subscription for team-shared spots
+  const syncVotes = useCallback(async () => {
+    try {
+      const rows = await fetchDailyVotes(todayStr);
+      setDailyVotes(rows);
+    } catch {
+      // keep existing state when offline
+    }
+  }, [todayStr]);
+
+  const syncReviews = useCallback(async () => {
+    try {
+      const rows = await fetchLunchReviews();
+      setReviews(rows);
+    } catch {
+      // keep existing state when offline
+    }
+  }, []);
+
+  // Initial load + Supabase Realtime subscriptions
   useEffect(() => {
     void syncSharedSpots();
-    const unsubscribe = subscribeSharedFavoriteSpots(() => {
+    void syncVotes();
+    void syncReviews();
+
+    const unsubSpots = subscribeSharedFavoriteSpots(() => {
       void syncSharedSpots();
     });
-    return unsubscribe;
-  }, [syncSharedSpots]);
+    const unsubCommunity = subscribeCommunityUpdates(
+      () => void syncVotes(),
+      () => void syncReviews()
+    );
+
+    return () => {
+      unsubSpots();
+      unsubCommunity();
+    };
+  }, [syncSharedSpots, syncVotes, syncReviews]);
 
   const handleRequestGps = useCallback(() => {
     if (!navigator.geolocation) {
@@ -250,26 +338,148 @@ export function App() {
     [sidebarFavoriteSpots, disabledSpotIds]
   );
 
-  // Main recommendations: strictly food menu categories/dishes only (never mixed with specific restaurants)
+  // Main recommendations: strictly food menu categories/dishes only
   const scoredMenus = useMemo(
     () => scoreMenus(GENERAL_MENUS, context, history),
     [context, history]
   );
 
-  const todayStr = getTodayDateString();
+  // Aggregated poll candidates & maps
+  const pollCandidates = useMemo(
+    () => aggregateDailyVotes(dailyVotes, memberId),
+    [dailyVotes, memberId]
+  );
+
+  const pollMap = useMemo(() => {
+    const map = new Map<string, AggregatedPollCandidate>();
+    for (const c of pollCandidates) {
+      map.set(c.itemId, c);
+    }
+    return map;
+  }, [pollCandidates]);
+
+  const ratingMap = useMemo(() => buildRatingSummaryMap(reviews), [reviews]);
+
   const todayConfirmedMenuId = useMemo(() => {
     const todayEntry = history.find((h) => h.date === todayStr);
     return todayEntry?.menuId ?? null;
   }, [history, todayStr]);
 
-  const handleConfirmMenu = useCallback(
+  // Execute vote toggle with a resolved nickname
+  const executeToggleVote = useCallback(
+    async (target: VoteTargetInput, voterName: string) => {
+      const alreadyVoted = dailyVotes.some(
+        (v) => v.itemId === target.itemId && v.voterId === memberId
+      );
+
+      if (alreadyVoted) {
+        setDailyVotes((prev) =>
+          prev.filter(
+            (v) => !(v.itemId === target.itemId && v.voterId === memberId)
+          )
+        );
+        try {
+          await removeDailyVote(todayStr, target.itemId, memberId);
+          showToast(`'${target.itemName}' 투표를 취소했어요.`);
+        } catch {
+          void syncVotes();
+          showToast('투표 취소 중 오류가 발생했어요.');
+        }
+      } else {
+        try {
+          const inserted = await castDailyVote({
+            voteDate: todayStr,
+            itemId: target.itemId,
+            itemName: target.itemName,
+            itemEmoji: target.itemEmoji,
+            itemCategory: target.itemCategory,
+            itemType: target.itemType,
+            voterId: memberId,
+            voterName,
+          });
+          setDailyVotes((prev) => [
+            ...prev.filter((v) => v.id !== inserted.id),
+            inserted,
+          ]);
+          setSidebarTab('poll');
+          showToast(
+            `👍 '${target.itemName}'에 투표했어요! 오른쪽 [오늘 투표] 탭에 반영됐습니다.`
+          );
+        } catch {
+          void syncVotes();
+          showToast('투표 저장 중 오류가 발생했어요.');
+        }
+      }
+    },
+    [dailyVotes, memberId, showToast, syncVotes, todayStr]
+  );
+
+  const requestVoteToggle = useCallback(
+    (target: VoteTargetInput) => {
+      const alreadyVoted = dailyVotes.some(
+        (v) => v.itemId === target.itemId && v.voterId === memberId
+      );
+      if (!alreadyVoted && !memberNickname.trim()) {
+        setNickModalInput('');
+        setPendingVoteTarget(target);
+        return;
+      }
+      void executeToggleVote(target, memberNickname.trim() || '익명 팀원');
+    },
+    [dailyVotes, executeToggleVote, memberId, memberNickname]
+  );
+
+  const handleToggleVoteForMenu = useCallback(
     (menu: ScoredMenu) => {
+      requestVoteToggle({
+        itemId: menu.id,
+        itemName: menu.name,
+        itemEmoji: menu.emoji,
+        itemCategory: menu.category,
+        itemType: menu.isFavoriteSpot ? 'spot' : 'menu',
+      });
+    },
+    [requestVoteToggle]
+  );
+
+  const handleToggleVoteForCandidate = useCallback(
+    (cand: AggregatedPollCandidate) => {
+      requestVoteToggle({
+        itemId: cand.itemId,
+        itemName: cand.itemName,
+        itemEmoji: cand.itemEmoji,
+        itemCategory: cand.itemCategory,
+        itemType: cand.itemType,
+      });
+    },
+    [requestVoteToggle]
+  );
+
+  const handleClearTodayPoll = useCallback(async () => {
+    setDailyVotes([]);
+    try {
+      await clearDailyVotes(todayStr);
+      showToast('오늘 팀 투표를 초기화했어요.');
+    } catch {
+      void syncVotes();
+    }
+  }, [showToast, syncVotes, todayStr]);
+
+  // Confirm lunch -> record history + open optional ReviewModal
+  const confirmLunchAndPromptReview = useCallback(
+    (item: {
+      id: string;
+      name: string;
+      emoji: string;
+      category: MenuCategory;
+      itemType: CommunityItemType;
+    }) => {
       const entry: LunchHistoryEntry = {
-        id: `${Date.now()}-${menu.id}`,
-        menuId: menu.id,
-        menuName: menu.name,
-        emoji: menu.emoji,
-        category: menu.category,
+        id: `${Date.now()}-${item.id}`,
+        menuId: item.id,
+        menuName: item.name,
+        emoji: item.emoji,
+        category: item.category,
         date: todayStr,
         timestamp: Date.now(),
         contextSnapshot: {
@@ -286,10 +496,160 @@ export function App() {
 
       setHistory((prev) => [entry, ...prev].slice(0, 60));
       showToast(
-        `${menu.emoji} 오늘 점심으로 '${menu.name}' 확정! 최근 식사 기록에 저장됐어요.`
+        `${item.emoji} 오늘 점심으로 '${item.name}' 확정! 식사 후 별점·한줄평도 남겨보세요.`
       );
+
+      const existing = reviews.find(
+        (r) =>
+          r.itemId === item.id &&
+          r.authorId === memberId &&
+          r.eatenDate === todayStr
+      );
+      setReviewJustConfirmed(true);
+      setReviewTarget({
+        itemId: item.id,
+        itemName: item.name,
+        itemEmoji: item.emoji,
+        itemCategory: item.category,
+        itemType: item.itemType,
+        eatenDate: todayStr,
+        existingReview: existing,
+      });
     },
-    [context, location.name, setHistory, showToast, todayStr]
+    [context, location.name, memberId, reviews, setHistory, showToast, todayStr]
+  );
+
+  const handleConfirmMenu = useCallback(
+    (menu: ScoredMenu) => {
+      confirmLunchAndPromptReview({
+        id: menu.id,
+        name: menu.name,
+        emoji: menu.emoji,
+        category: menu.category,
+        itemType: menu.isFavoriteSpot ? 'spot' : 'menu',
+      });
+    },
+    [confirmLunchAndPromptReview]
+  );
+
+  const handleConfirmPollCandidate = useCallback(
+    (cand: AggregatedPollCandidate) => {
+      confirmLunchAndPromptReview({
+        id: cand.itemId,
+        name: cand.itemName,
+        emoji: cand.itemEmoji,
+        category: cand.itemCategory,
+        itemType: cand.itemType,
+      });
+    },
+    [confirmLunchAndPromptReview]
+  );
+
+  const handleOpenReviewForMenu = useCallback(
+    (menu: ScoredMenu) => {
+      const existing = reviews.find(
+        (r) =>
+          r.itemId === menu.id &&
+          r.authorId === memberId &&
+          r.eatenDate === todayStr
+      );
+      setReviewJustConfirmed(false);
+      setReviewTarget({
+        itemId: menu.id,
+        itemName: menu.name,
+        itemEmoji: menu.emoji,
+        itemCategory: menu.category,
+        itemType: menu.isFavoriteSpot ? 'spot' : 'menu',
+        eatenDate: todayStr,
+        existingReview: existing,
+      });
+    },
+    [memberId, reviews, todayStr]
+  );
+
+  const handleOpenReviewForHistory = useCallback(
+    (entry: LunchHistoryEntry) => {
+      const isSpot = allFavoriteSpots.some((s) => s.id === entry.menuId);
+      const existing = reviews.find(
+        (r) =>
+          r.itemId === entry.menuId &&
+          r.authorId === memberId &&
+          r.eatenDate === entry.date
+      );
+      setReviewJustConfirmed(false);
+      setReviewTarget({
+        itemId: entry.menuId,
+        itemName: entry.menuName,
+        itemEmoji: entry.emoji,
+        itemCategory: entry.category,
+        itemType: isSpot ? 'spot' : 'menu',
+        eatenDate: entry.date,
+        existingReview: existing,
+      });
+    },
+    [allFavoriteSpots, memberId, reviews]
+  );
+
+  const handleSubmitReview = useCallback(
+    async (payload: {
+      rating: number;
+      comment: string;
+      authorName: string;
+      existingId?: number;
+    }) => {
+      if (!reviewTarget) return;
+      try {
+        if (payload.existingId) {
+          const updated = await updateLunchReview(
+            payload.existingId,
+            payload.rating,
+            payload.comment,
+            payload.authorName
+          );
+          setReviews((prev) =>
+            prev.map((r) => (r.id === updated.id ? updated : r))
+          );
+          showToast(`★ '${reviewTarget.itemName}' 리뷰를 수정했어요!`);
+        } else {
+          const created = await createLunchReview({
+            itemId: reviewTarget.itemId,
+            itemName: reviewTarget.itemName,
+            itemEmoji: reviewTarget.itemEmoji,
+            itemCategory: reviewTarget.itemCategory,
+            itemType: reviewTarget.itemType,
+            rating: payload.rating,
+            comment: payload.comment,
+            authorId: memberId,
+            authorName: payload.authorName,
+            eatenDate: reviewTarget.eatenDate,
+          });
+          setReviews((prev) => [
+            created,
+            ...prev.filter((r) => r.id !== created.id),
+          ]);
+          showToast(
+            `★ '${reviewTarget.itemName}' 별점(${payload.rating}점)·한줄평이 팀에 공유됐어요!`
+          );
+        }
+      } catch {
+        showToast('리뷰 저장 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+      }
+    },
+    [memberId, reviewTarget, showToast]
+  );
+
+  const handleDeleteReview = useCallback(
+    async (id: number) => {
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      try {
+        await deleteLunchReview(id);
+        showToast('리뷰를 삭제했어요.');
+      } catch {
+        void syncReviews();
+        showToast('리뷰 삭제 중 오류가 발생했어요.');
+      }
+    },
+    [showToast, syncReviews]
   );
 
   const handleToggleSpotEnabled = useCallback(
@@ -303,7 +663,6 @@ export function App() {
 
   const handleAddCustomSpot = useCallback(
     async (spot: MenuItem) => {
-      // Optimistic local update
       setCustomSpots((prev) => [spot, ...prev.filter((s) => s.id !== spot.id)]);
       try {
         const saved = await addSharedFavoriteSpot(spot);
@@ -383,6 +742,11 @@ export function App() {
     showToast('점심 식사 기록을 모두 초기화했어요.');
   }, [setHistory, showToast]);
 
+  const activeItemReviews = useMemo(() => {
+    if (!reviewTarget) return [];
+    return reviews.filter((r) => r.itemId === reviewTarget.itemId);
+  }, [reviewTarget, reviews]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F4]">
       <Header
@@ -404,15 +768,29 @@ export function App() {
         <div className="flex flex-col lg:flex-row items-stretch gap-5">
           {/* Left Main Column */}
           <div className="flex-1 min-w-0 w-full space-y-4">
-            {/* Mobile-only button to open Favorite Spots Drawer */}
-            <div className="flex lg:hidden justify-end">
+            {/* Mobile-only triggers for Sidebar Drawer */}
+            <div className="flex lg:hidden justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setMobileSidebarOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-amber-100 hover:bg-amber-200/80 border border-amber-300/70 text-amber-950 text-xs font-extrabold transition cursor-pointer"
+                onClick={() => {
+                  setSidebarTab('poll');
+                  setMobileSidebarOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-orange-100 hover:bg-orange-200/80 border border-orange-300/70 text-orange-950 text-xs font-extrabold transition cursor-pointer"
+              >
+                <Vote className="w-3.5 h-3.5 text-[#E85D2A]" />
+                오늘 투표 ({pollCandidates.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSidebarTab('spots');
+                  setMobileSidebarOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-amber-100 hover:bg-amber-200/80 border border-amber-300/70 text-amber-950 text-xs font-extrabold transition cursor-pointer"
               >
                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                기본 확정 식당 ({activeFavoriteCount}/{allFavoriteSpots.length})
+                기본 식당 ({activeFavoriteCount}/{allFavoriteSpots.length})
               </button>
             </div>
 
@@ -435,7 +813,11 @@ export function App() {
                 context={context}
                 locationName={location.name}
                 todayConfirmedMenuId={todayConfirmedMenuId}
+                pollMap={pollMap}
+                ratingMap={ratingMap}
                 onConfirmMenu={handleConfirmMenu}
+                onToggleVote={handleToggleVoteForMenu}
+                onOpenReview={handleOpenReviewForMenu}
               />
             )}
 
@@ -444,24 +826,30 @@ export function App() {
                 scoredMenus={scoredMenus}
                 favoriteSpots={enabledFavoriteSpots}
                 locationName={location.name}
+                pollMap={pollMap}
                 onConfirmMenu={handleConfirmMenu}
+                onToggleVote={handleToggleVoteForMenu}
               />
             )}
 
             {activeTab === 'history' && (
               <LunchHistoryPanel
                 history={history}
+                reviews={reviews}
+                memberId={memberId}
                 favoriteSpots={allFavoriteSpots}
                 excludeRecentDays={context.excludeRecentDays}
                 locationName={location.name}
                 onAddManualEntry={handleAddManualEntry}
                 onDeleteEntry={handleDeleteEntry}
                 onClearAll={handleClearHistory}
+                onOpenReviewForHistory={handleOpenReviewForHistory}
+                onDeleteReview={handleDeleteReview}
               />
             )}
           </div>
 
-          {/* Right Sticky Sidebar: 기본 확정 식당 */}
+          {/* Right Sticky Sidebar: 기본 확정 식당 & 오늘 투표 */}
           <FavoriteSpotsSidebar
             favoriteSpots={sidebarFavoriteSpots}
             customSpotIds={customSpotIds}
@@ -471,7 +859,21 @@ export function App() {
             locationLat={location.lat}
             locationLon={location.lon}
             syncStatus={syncStatus}
-            onRefreshSync={() => void syncSharedSpots()}
+            activeSidebarTab={sidebarTab}
+            onChangeSidebarTab={setSidebarTab}
+            pollCandidates={pollCandidates}
+            ratingMap={ratingMap}
+            memberNickname={memberNickname}
+            onChangeNickname={setMemberNickname}
+            onToggleVoteCandidate={handleToggleVoteForCandidate}
+            onConfirmPollCandidate={handleConfirmPollCandidate}
+            onClearTodayPoll={handleClearTodayPoll}
+            onOpenReviewForSpot={handleOpenReviewForMenu}
+            onRefreshSync={() => {
+              void syncSharedSpots();
+              void syncVotes();
+              void syncReviews();
+            }}
             onToggleSpotEnabled={handleToggleSpotEnabled}
             onConfirmSpot={handleConfirmMenu}
             onAddCustomSpot={handleAddCustomSpot}
@@ -484,8 +886,100 @@ export function App() {
       </main>
 
       <footer className="max-w-[1440px] w-full mx-auto px-4 sm:px-5 py-2.5 text-center text-[11px] text-stone-400">
-        실시간 날씨 데이터: Open-Meteo · 주변 식당 검색: 네이버 지도 &amp; 카카오맵 바로가기
+        실시간 날씨 데이터: Open-Meteo · 팀 동기화/투표/리뷰: Supabase · 지도: 네이버 &amp; 카카오맵
       </footer>
+
+      {/* First-time Nickname Modal for Voting */}
+      {pendingVoteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-stone-950/45 backdrop-blur-[1px]"
+            onClick={() => setPendingVoteTarget(null)}
+          />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const nick = nickModalInput.trim() || '익명 팀원';
+              setMemberNickname(nick);
+              const target = pendingVoteTarget;
+              setPendingVoteTarget(null);
+              void executeToggleVote(target, nick);
+            }}
+            className="relative z-10 w-full max-w-xs rounded-3xl bg-white border border-stone-200 shadow-2xl p-5 space-y-4 animate-pop-in"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#E85D2A] flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-stone-900">
+                    투표 닉네임 입력
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    한 번 입력하면 다음에 바로 투표돼요
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingVoteTarget(null)}
+                className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-700 font-semibold">
+              {pendingVoteTarget.itemEmoji} {pendingVoteTarget.itemName}에 투표
+            </div>
+
+            <input
+              type="text"
+              value={nickModalInput}
+              onChange={(e) => setNickModalInput(e.target.value)}
+              placeholder="이름 또는 닉네임 (예: 홍길동)"
+              maxLength={24}
+              autoFocus
+              className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 focus:border-[#E85D2A] text-sm text-stone-900 focus:outline-none"
+            />
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = pendingVoteTarget;
+                  setMemberNickname('익명 팀원');
+                  setPendingVoteTarget(null);
+                  void executeToggleVote(target, '익명 팀원');
+                }}
+                className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-bold cursor-pointer"
+              >
+                익명으로 투표
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-[#E85D2A] hover:bg-[#D14D1E] text-white text-xs font-bold cursor-pointer"
+              >
+                확인하고 투표
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Star Rating & One-Line Review Modal */}
+      <ReviewModal
+        target={reviewTarget}
+        itemReviews={activeItemReviews}
+        memberId={memberId}
+        memberNickname={memberNickname}
+        justConfirmed={reviewJustConfirmed}
+        onSaveNickname={setMemberNickname}
+        onSubmitReview={handleSubmitReview}
+        onDeleteReview={handleDeleteReview}
+        onClose={() => setReviewTarget(null)}
+      />
 
       {/* Toast Notification */}
       {toastMessage && (

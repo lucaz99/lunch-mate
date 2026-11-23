@@ -4,6 +4,8 @@ import {
   ExternalLink,
   Flame,
   Sparkles,
+  Star,
+  ThumbsUp,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -11,7 +13,12 @@ import {
   buildKakaoMapUrl,
   buildNaverMapUrl,
 } from '../services/weatherAndLocation';
-import { LunchContext, ScoredMenu } from '../types/lunch';
+import {
+  AggregatedPollCandidate,
+  ItemRatingSummary,
+  LunchContext,
+  ScoredMenu,
+} from '../types/lunch';
 import { getConditionHeadline } from '../utils/recommender';
 
 interface RecommendationSectionProps {
@@ -19,7 +26,11 @@ interface RecommendationSectionProps {
   context: LunchContext;
   locationName: string;
   todayConfirmedMenuId: string | null;
+  pollMap: Map<string, AggregatedPollCandidate>;
+  ratingMap: Map<string, ItemRatingSummary>;
   onConfirmMenu: (menu: ScoredMenu) => void;
+  onToggleVote: (menu: ScoredMenu) => void;
+  onOpenReview: (menu: ScoredMenu) => void;
 }
 
 export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
@@ -27,7 +38,11 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
   context,
   locationName,
   todayConfirmedMenuId,
+  pollMap,
+  ratingMap,
   onConfirmMenu,
+  onToggleVote,
+  onOpenReview,
 }) => {
   const [showAll, setShowAll] = useState(false);
 
@@ -46,6 +61,9 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
       </div>
     );
   }
+
+  const heroPoll = pollMap.get(hero.id);
+  const heroRating = ratingMap.get(hero.id);
 
   return (
     <section className="space-y-3.5">
@@ -106,6 +124,17 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
                   적합도 {hero.matchPercent}%
                 </span>
+                {heroRating && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenReview(hero)}
+                    title="팀원 별점·한줄평 보기"
+                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[11px] font-bold text-amber-800 transition cursor-pointer"
+                  >
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    {heroRating.avgRating} ({heroRating.count})
+                  </button>
+                )}
                 <span className="text-[11px] text-stone-400 hidden sm:inline">
                   약 {hero.avgPrice.toLocaleString()}원 · {hero.kcalApprox} kcal
                 </span>
@@ -129,19 +158,34 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
           </div>
 
           {/* Hero Action Column */}
-          <div className="flex sm:flex-row md:flex-col gap-2 md:w-44 shrink-0">
-            <button
-              type="button"
-              onClick={() => onConfirmMenu(hero)}
-              className={`flex-1 md:flex-none py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs ${
-                todayConfirmedMenuId === hero.id
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-[#E85D2A] hover:bg-[#D14D1E] text-white'
-              }`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              {todayConfirmedMenuId === hero.id ? '오늘 기록됨!' : '오늘 이거 먹기!'}
-            </button>
+          <div className="flex sm:flex-row md:flex-col gap-2 md:w-48 shrink-0">
+            <div className="flex gap-1.5 flex-1 md:flex-none">
+              <button
+                type="button"
+                onClick={() => onConfirmMenu(hero)}
+                className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition cursor-pointer shadow-2xs whitespace-nowrap ${
+                  todayConfirmedMenuId === hero.id
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-[#E85D2A] hover:bg-[#D14D1E] text-white'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {todayConfirmedMenuId === hero.id ? '오늘 확정됨' : '오늘 먹기'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleVote(hero)}
+                title="오늘 팀 투표 후보에 올리기 / 투표"
+                className={`px-3 py-2.5 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1 border transition cursor-pointer shrink-0 ${
+                  heroPoll?.myVoted
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                    : 'bg-white hover:bg-amber-50 text-stone-700 border-stone-200 hover:border-amber-300'
+                }`}
+              >
+                <ThumbsUp className="w-3.5 h-3.5" />
+                <span>{heroPoll?.voteCount ? heroPoll.voteCount : '투표'}</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-2 gap-1.5">
               <a
@@ -197,6 +241,8 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
           {visibleOthers.map((menu, idx) => {
             const rank = idx + 2;
             const confirmed = todayConfirmedMenuId === menu.id;
+            const poll = pollMap.get(menu.id);
+            const rating = ratingMap.get(menu.id);
             return (
               <article
                 key={menu.id}
@@ -208,7 +254,7 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1 min-w-0">
                       <span className="text-xl leading-none shrink-0">
                         {menu.emoji}
                       </span>
@@ -219,28 +265,64 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
                         {menu.category}
                       </span>
                     </div>
-                    <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                        menu.isRecentlyEaten
-                          ? 'bg-stone-200 text-stone-600'
-                          : 'bg-orange-50 text-[#C2410C]'
-                      }`}
-                    >
-                      {menu.isRecentlyEaten
-                        ? menu.lastEatenDaysAgo === 0
-                          ? '오늘'
-                          : `${menu.lastEatenDaysAgo}일전`
-                        : `${menu.matchPercent}%`}
-                    </span>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onToggleVote(menu)}
+                        title={
+                          poll?.myVoted
+                            ? '투표 취소하기'
+                            : '오늘 팀 투표 후보로 올리기 / 투표'
+                        }
+                        className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold border transition cursor-pointer ${
+                          poll?.myVoted
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : poll?.voteCount
+                              ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                              : 'bg-stone-50 text-stone-500 border-stone-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200'
+                        }`}
+                      >
+                        <ThumbsUp className="w-2.5 h-2.5" />
+                        {poll?.voteCount ? <span>{poll.voteCount}</span> : null}
+                      </button>
+
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          menu.isRecentlyEaten
+                            ? 'bg-stone-200 text-stone-600'
+                            : 'bg-orange-50 text-[#C2410C]'
+                        }`}
+                      >
+                        {menu.isRecentlyEaten
+                          ? menu.lastEatenDaysAgo === 0
+                            ? '오늘'
+                            : `${menu.lastEatenDaysAgo}일전`
+                          : `${menu.matchPercent}%`}
+                      </span>
+                    </div>
                   </div>
 
                   <div>
-                    <h4
-                      title={menu.name}
-                      className="font-extrabold text-stone-900 text-sm leading-snug truncate"
-                    >
-                      {menu.name}
-                    </h4>
+                    <div className="flex items-center justify-between gap-1">
+                      <h4
+                        title={menu.name}
+                        className="font-extrabold text-stone-900 text-sm leading-snug truncate"
+                      >
+                        {menu.name}
+                      </h4>
+                      {rating && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenReview(menu)}
+                          title={`팀 평균 별점 ${rating.avgRating} (${rating.count}명)`}
+                          className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 hover:text-amber-800 shrink-0 cursor-pointer"
+                        >
+                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          {rating.avgRating}
+                        </button>
+                      )}
+                    </div>
                     <p
                       title={menu.description}
                       className="text-[11px] text-stone-500 truncate mt-0.5"

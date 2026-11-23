@@ -7,19 +7,22 @@ import {
   Layers,
   RotateCcw,
   Sparkles,
+  ThumbsUp,
   X,
 } from 'lucide-react';
 import {
   buildKakaoMapUrl,
   buildNaverMapUrl,
 } from '../services/weatherAndLocation';
-import { ScoredMenu } from '../types/lunch';
+import { AggregatedPollCandidate, ScoredMenu } from '../types/lunch';
 
 interface RandomPickerProps {
   scoredMenus: ScoredMenu[];
   favoriteSpots: ScoredMenu[];
   locationName: string;
+  pollMap: Map<string, AggregatedPollCandidate>;
   onConfirmMenu: (menu: ScoredMenu) => void;
+  onToggleVote: (menu: ScoredMenu) => void;
 }
 
 type PickerMode = 'slot' | 'swipe';
@@ -29,7 +32,9 @@ export const RandomPicker: React.FC<RandomPickerProps> = ({
   scoredMenus,
   favoriteSpots,
   locationName,
+  pollMap,
   onConfirmMenu,
+  onToggleVote,
 }) => {
   const [mode, setMode] = useState<PickerMode>('slot');
   const [target, setTarget] = useState<PickerTarget>('menus');
@@ -307,10 +312,24 @@ export const RandomPicker: React.FC<RandomPickerProps> = ({
                       <button
                         type="button"
                         onClick={() => onConfirmMenu(winner)}
-                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" />
                         이걸로 오늘 점심 확정!
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onToggleVote(winner)}
+                        className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          pollMap.get(winner.id)?.myVoted
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                        }`}
+                      >
+                        <ThumbsUp className="w-3.5 h-3.5" />
+                        {pollMap.get(winner.id)?.myVoted
+                          ? `투표 완료 (${pollMap.get(winner.id)?.voteCount ?? 1})`
+                          : '오늘 투표에 올리기'}
                       </button>
                       <a
                         href={buildNaverMapUrl(
@@ -424,30 +443,44 @@ export const RandomPicker: React.FC<RandomPickerProps> = ({
               </div>
 
               {/* Swipe Controls */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => handleSwipeDecision('pass')}
-                  className="py-3.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                   패스
                 </button>
                 <button
                   type="button"
+                  onClick={() => onToggleVote(currentCard)}
+                  className={`py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1 border transition cursor-pointer ${
+                    pollMap.get(currentCard.id)?.myVoted
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                  }`}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  {pollMap.get(currentCard.id)?.voteCount
+                    ? `투표 ${pollMap.get(currentCard.id)?.voteCount}`
+                    : '투표'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => onConfirmMenu(currentCard)}
-                  className="py-3.5 rounded-2xl bg-[#E85D2A] hover:bg-[#D14D1E] text-white font-bold text-sm flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm"
+                  className="py-3 rounded-2xl bg-[#E85D2A] hover:bg-[#D14D1E] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1 transition cursor-pointer shadow-sm"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  바로 확정
+                  확정
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSwipeDecision('like')}
-                  className="py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 transition cursor-pointer"
                 >
                   <Heart className="w-4 h-4 fill-rose-500" />
-                  찜하기
+                  찜
                 </button>
               </div>
             </div>

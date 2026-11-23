@@ -121,3 +121,61 @@ export interface LiveWeatherData {
   description: string;
   fetchedAt: number;
 }
+
+export type CommunityItemType = 'menu' | 'spot';
+
+export interface DailyVoteRecord {
+  id: number;
+  voteDate: string;
+  itemId: string;
+  itemName: string;
+  itemEmoji: string;
+  itemCategory: MenuCategory;
+  itemType: CommunityItemType;
+  voterId: string;
+  voterName: string;
+  createdAt: string;
+}
+
+export interface AggregatedPollCandidate {
+  itemId: string;
+  itemName: string;
+  itemEmoji: string;
+  itemCategory: MenuCategory;
+  itemType: CommunityItemType;
+  voteCount: number;
+  voters: { voterId: string; voterName: string }[];
+  myVoted: boolean;
+}
+
+export interface LunchReviewRecord {
+  id: number;
+  itemId: string;
+  itemName: string;
+  itemEmoji: string;
+  itemCategory: MenuCategory;
+  itemType: CommunityItemType;
+  rating: number;
+  comment: string;
+  authorId: string;
+  authorName: string;
+  eatenDate: string;
+  createdAt: string;
+}
+
+export interface ItemRatingSummary {
+  avgRating: number;
+  count: number;
+  latestComment?: string;
+}
+
+export interface ReviewDraftTarget {
+  itemId: string;
+  itemName: string;
+  itemEmoji: string;
+  itemCategory: MenuCategory;
+  itemType: CommunityItemType;
+  eatenDate: string;
+  existingReview?: LunchReviewRecord;
+}
+
