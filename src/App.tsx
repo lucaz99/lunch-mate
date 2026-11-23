@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  CheckCircle2,
-  Dices,
-  History,
-  Sparkles,
-  Star,
-} from 'lucide-react';
+import { CheckCircle2, Star } from 'lucide-react';
 import { ContextControls } from './components/ContextControls';
 import { FavoriteSpotsSidebar } from './components/FavoriteSpotsSidebar';
 import { Header } from './components/Header';
@@ -24,6 +18,7 @@ import {
   reverseGeocodeKorean,
 } from './services/weatherAndLocation';
 import {
+  ActiveTab,
   LiveWeatherData,
   LocationPreset,
   LocationState,
@@ -37,8 +32,6 @@ import {
   isYesterdayWeekend,
   scoreMenus,
 } from './utils/recommender';
-
-type ActiveTab = 'recommend' | 'picker' | 'history';
 
 const DEFAULT_PRESET = LOCATION_PRESETS[0]; // 서울 강서구 화곡로 372
 
@@ -344,66 +337,24 @@ export function App() {
         weatherError={weatherError}
         context={context}
         autoWeekendDetected={autoWeekendDetected}
+        activeTab={activeTab}
+        historyCount={history.length}
+        onChangeTab={setActiveTab}
         onRequestGps={handleRequestGps}
         onSelectPreset={handleSelectPreset}
         onRefreshWeather={() => loadWeatherForCoords(location.lat, location.lon)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-7">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-6">
         <div className="flex flex-col lg:flex-row items-start gap-6">
           {/* Left Main Column */}
           <div className="flex-1 min-w-0 w-full space-y-6">
-            {/* Top Navigation Tabs + Mobile Sidebar Trigger */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5">
-              <nav className="flex items-center gap-2 bg-stone-200/70 p-1.5 rounded-2xl w-full sm:w-fit">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('recommend')}
-                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                    activeTab === 'recommend'
-                      ? 'bg-white text-stone-900 shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-[#E85D2A]" />
-                  맞춤 추천
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('picker')}
-                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                    activeTab === 'picker'
-                      ? 'bg-white text-stone-900 shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  <Dices className="w-4 h-4 text-[#E85D2A]" />
-                  결정 장애 뽑기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('history')}
-                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                    activeTab === 'history'
-                      ? 'bg-white text-stone-900 shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  <History className="w-4 h-4 text-[#E85D2A]" />
-                  점심 기록
-                  {history.length > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-stone-900 text-white text-[10px]">
-                      {history.length}
-                    </span>
-                  )}
-                </button>
-              </nav>
-
-              {/* Mobile-only button to open Favorite Spots Drawer */}
+            {/* Mobile-only button to open Favorite Spots Drawer */}
+            <div className="flex lg:hidden justify-end">
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-amber-100 hover:bg-amber-200/80 border border-amber-300/70 text-amber-950 text-xs font-extrabold transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-amber-100 hover:bg-amber-200/80 border border-amber-300/70 text-amber-950 text-xs font-extrabold transition cursor-pointer"
               >
                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                 기본 확정 식당 ({activeFavoriteCount}/{allFavoriteSpots.length})

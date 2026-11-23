@@ -3,15 +3,19 @@ import {
   Cloud,
   CloudRain,
   CloudSnow,
+  Dices,
+  History,
   LocateFixed,
   MapPin,
   RefreshCw,
+  Sparkles,
   Sun,
   ChevronDown,
   UtensilsCrossed,
 } from 'lucide-react';
 import { LOCATION_PRESETS } from '../data/menus';
 import {
+  ActiveTab,
   LiveWeatherData,
   LocationPreset,
   LocationState,
@@ -25,6 +29,9 @@ interface HeaderProps {
   weatherError: string | null;
   context: LunchContext;
   autoWeekendDetected: boolean;
+  activeTab: ActiveTab;
+  historyCount: number;
+  onChangeTab: (tab: ActiveTab) => void;
   onRequestGps: () => void;
   onSelectPreset: (preset: LocationPreset) => void;
   onRefreshWeather: () => void;
@@ -39,6 +46,9 @@ export const Header: React.FC<HeaderProps> = ({
   weatherError,
   context,
   autoWeekendDetected,
+  activeTab,
+  historyCount,
+  onChangeTab,
   onRequestGps,
   onSelectPreset,
   onRefreshWeather,
@@ -70,133 +80,189 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#FAF8F4]/90 backdrop-blur-md border-b border-stone-200/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5">
+    <header className="sticky top-0 z-30 bg-[#FAF8F4]/92 backdrop-blur-md border-b border-stone-200/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: Brand */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#E85D2A] text-white flex items-center justify-center shadow-sm shadow-[#E85D2A]/25">
             <UtensilsCrossed className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <h1 className="text-lg font-extrabold tracking-tight text-stone-900">
                 오늘점심
               </h1>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-stone-200/80 text-stone-700">
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200/80 text-stone-700">
                 {dateLabel}
               </span>
               {autoWeekendDetected && (
-                <span className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                <span className="hidden xl:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                   주말 직후
                 </span>
               )}
             </div>
-            <p className="text-xs text-stone-500 hidden sm:block">
-              위치·날씨·어제 컨디션에 맞춰 바뀌는 스마트 점심 가이드
+            <p className="text-[11px] text-stone-500 hidden xl:block">
+              위치·날씨·컨디션 맞춤 점심 가이드
             </p>
           </div>
         </div>
 
-        {/* Location & Live Weather Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Location Selector */}
-          <div className="relative">
+        {/* Center / Right Cluster: Tabs right next to Location & Weather */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto justify-between lg:justify-end">
+          {/* Navigation Tabs */}
+          <nav
+            aria-label="주요 메뉴"
+            className="flex items-center gap-1 bg-stone-200/75 p-1 rounded-xl order-2 sm:order-1 w-full sm:w-auto"
+          >
             <button
               type="button"
-              onClick={() => setShowLocationMenu((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:border-stone-300 text-xs sm:text-sm font-medium text-stone-800 shadow-2xs transition cursor-pointer"
+              onClick={() => onChangeTab('recommend')}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'recommend'
+                  ? 'bg-white text-stone-900 shadow-2xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
             >
-              <MapPin className="w-3.5 h-3.5 text-[#E85D2A] shrink-0" />
-              <span className="max-w-[170px] truncate">
-                {location.loading ? '위치 찾는 중...' : location.name}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+              <Sparkles className="w-3.5 h-3.5 text-[#E85D2A]" />
+              맞춤 추천
             </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('picker')}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'picker'
+                  ? 'bg-white text-stone-900 shadow-2xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Dices className="w-3.5 h-3.5 text-[#E85D2A]" />
+              결정 장애 뽑기
+            </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('history')}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'history'
+                  ? 'bg-white text-stone-900 shadow-2xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-[#E85D2A]" />
+              점심 기록
+              {historyCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-stone-900 text-white text-[10px]">
+                  {historyCount}
+                </span>
+              )}
+            </button>
+          </nav>
 
-            {showLocationMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowLocationMenu(false)}
-                />
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-stone-200 shadow-xl p-2 z-20 animate-pop-in">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowLocationMenu(false);
-                      onRequestGps();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#C2410C] text-xs font-semibold transition cursor-pointer mb-1.5"
-                  >
-                    <LocateFixed className="w-4 h-4 shrink-0" />
-                    <span>현재 GPS 위치 자동 감지</span>
-                  </button>
+          {/* Divider on desktop */}
+          <div className="hidden lg:block w-px h-6 bg-stone-200/90 order-1" />
 
-                  <div className="px-2 py-1 text-[11px] font-semibold text-stone-400">
-                    주요 지역 빠른 선택
-                  </div>
-                  <div className="max-h-56 overflow-y-auto space-y-0.5">
-                    {LOCATION_PRESETS.map((preset) => {
-                      const active =
-                        location.source === 'preset' && location.name === preset.name;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => {
-                            onSelectPreset(preset);
-                            setShowLocationMenu(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition cursor-pointer ${
-                            active
-                              ? 'bg-stone-900 text-white font-semibold'
-                              : 'hover:bg-stone-100 text-stone-700'
-                          }`}
-                        >
-                          <span>{preset.name}</span>
-                          <span
-                            className={`text-[11px] ${
-                              active ? 'text-stone-300' : 'text-stone-400'
+          {/* Location & Live Weather Controls */}
+          <div className="flex items-center gap-2 flex-wrap order-1 sm:order-2">
+            {/* Location Selector */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowLocationMenu((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:border-stone-300 text-xs font-semibold text-stone-800 shadow-2xs transition cursor-pointer"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#E85D2A] shrink-0" />
+                <span className="max-w-[165px] truncate">
+                  {location.loading ? '위치 찾는 중...' : location.name}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+              </button>
+
+              {showLocationMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowLocationMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-stone-200 shadow-xl p-2 z-20 animate-pop-in">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLocationMenu(false);
+                        onRequestGps();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#C2410C] text-xs font-semibold transition cursor-pointer mb-1.5"
+                    >
+                      <LocateFixed className="w-4 h-4 shrink-0" />
+                      <span>현재 GPS 위치 자동 감지</span>
+                    </button>
+
+                    <div className="px-2 py-1 text-[11px] font-semibold text-stone-400">
+                      주요 지역 빠른 선택
+                    </div>
+                    <div className="max-h-56 overflow-y-auto space-y-0.5">
+                      {LOCATION_PRESETS.map((preset) => {
+                        const active =
+                          location.source === 'preset' &&
+                          location.name === preset.name;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              onSelectPreset(preset);
+                              setShowLocationMenu(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition cursor-pointer ${
+                              active
+                                ? 'bg-stone-900 text-white font-semibold'
+                                : 'hover:bg-stone-100 text-stone-700'
                             }`}
                           >
-                            {preset.district}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span>{preset.name}</span>
+                            <span
+                              className={`text-[11px] ${
+                                active ? 'text-stone-300' : 'text-stone-400'
+                              }`}
+                            >
+                              {preset.district}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
 
-          {/* Weather Pill */}
-          <button
-            type="button"
-            onClick={onRefreshWeather}
-            title="실시간 날씨 새로고침 (Open-Meteo)"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:border-stone-300 text-xs sm:text-sm font-medium text-stone-700 shadow-2xs transition cursor-pointer"
-          >
-            {renderWeatherIcon()}
-            {weatherLoading ? (
-              <span className="text-stone-400">날씨 확인중</span>
-            ) : context.isWeatherSimulated ? (
-              <span className="text-[#E85D2A] font-semibold">
-                시뮬레이션 · {feelTextMap[context.weatherFeel]}
-              </span>
-            ) : liveWeather ? (
-              <span>
-                {Math.round(liveWeather.temperatureC)}°C · {liveWeather.description}
-              </span>
-            ) : weatherError ? (
-              <span className="text-stone-500">날씨 오프라인</span>
-            ) : (
-              <span>{feelTextMap[context.weatherFeel]}</span>
-            )}
-            <RefreshCw
-              className={`w-3 h-3 text-stone-400 ${weatherLoading ? 'animate-spin' : ''}`}
-            />
-          </button>
+            {/* Weather Pill */}
+            <button
+              type="button"
+              onClick={onRefreshWeather}
+              title="실시간 날씨 새로고침 (Open-Meteo)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-stone-200 hover:border-stone-300 text-xs font-semibold text-stone-700 shadow-2xs transition cursor-pointer"
+            >
+              {renderWeatherIcon()}
+              {weatherLoading ? (
+                <span className="text-stone-400">날씨 확인중</span>
+              ) : context.isWeatherSimulated ? (
+                <span className="text-[#E85D2A] font-semibold">
+                  시뮬레이션 · {feelTextMap[context.weatherFeel]}
+                </span>
+              ) : liveWeather ? (
+                <span>
+                  {Math.round(liveWeather.temperatureC)}°C ·{' '}
+                  {liveWeather.description}
+                </span>
+              ) : weatherError ? (
+                <span className="text-stone-500">날씨 오프라인</span>
+              ) : (
+                <span>{feelTextMap[context.weatherFeel]}</span>
+              )}
+              <RefreshCw
+                className={`w-3 h-3 text-stone-400 ${weatherLoading ? 'animate-spin' : ''}`}
+              />
+            </button>
+          </div>
         </div>
       </div>
 

@@ -12,6 +12,8 @@ export type MealPace = 'fast' | 'normal' | 'relaxed';
 
 export type SpotScope = 'favorites' | 'all' | 'general';
 
+export type ActiveTab = 'recommend' | 'picker' | 'history';
+
 export type MenuTag =
   | 'hangover'
   | 'soup'
