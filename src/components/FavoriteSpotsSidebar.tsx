@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import {
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Plus,
   Search,
@@ -58,6 +60,9 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortByScore, setSortByScore] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAllSpots, setShowAllSpots] = useState(false);
+
+  const DEFAULT_VISIBLE_COUNT = 7;
 
   // New custom spot form state
   const [newName, setNewName] = useState('');
@@ -84,6 +89,13 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
     }
     return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }, [favoriteSpots, searchQuery, sortByScore]);
+
+  const isSearching = searchQuery.trim().length > 0;
+  const visibleSpots =
+    showAllSpots || isSearching
+      ? displayedSpots
+      : displayedSpots.slice(0, DEFAULT_VISIBLE_COUNT);
+  const remainingCount = displayedSpots.length - visibleSpots.length;
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,13 +267,13 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
       </div>
 
       {/* Scrollable Restaurant List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-        {displayedSpots.length === 0 ? (
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {visibleSpots.length === 0 ? (
           <div className="py-8 text-center text-xs text-stone-400">
             검색 결과가 없어요.
           </div>
         ) : (
-          displayedSpots.map((spot) => {
+          visibleSpots.map((spot) => {
             const isDisabled = disabledSpotIds.includes(spot.id);
             const isConfirmed = todayConfirmedMenuId === spot.id;
             const isCustom = customSpotIds.has(spot.id);
@@ -269,7 +281,7 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
             return (
               <div
                 key={spot.id}
-                className={`group rounded-xl border p-2 transition ${
+                className={`group rounded-xl border px-2 py-1.5 transition ${
                   isConfirmed
                     ? 'bg-emerald-50/70 border-emerald-300'
                     : isDisabled
@@ -335,7 +347,7 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
                     )}
 
                     {/* Compact Action Row */}
-                    <div className="flex items-center justify-between gap-1 mt-2">
+                    <div className="flex items-center justify-between gap-1 mt-1.5">
                       <div className="flex items-center gap-1">
                         <a
                           href={buildNaverMapUrl(
@@ -392,11 +404,30 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
             );
           })
         )}
+
+        {!isSearching && displayedSpots.length > DEFAULT_VISIBLE_COUNT && (
+          <button
+            type="button"
+            onClick={() => setShowAllSpots((prev) => !prev)}
+            className="w-full py-1.5 mt-1 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 transition cursor-pointer"
+          >
+            {showAllSpots ? (
+              <>
+                7개만 보기 <ChevronUp className="w-3.5 h-3.5" />
+              </>
+            ) : (
+              <>
+                나머지 {remainingCount}곳 더 보기{' '}
+                <ChevronDown className="w-3.5 h-3.5" />
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Footer Tip */}
-      <div className="px-4 py-2.5 border-t border-stone-100 bg-stone-50/70 text-[11px] text-stone-400 shrink-0">
-        체크를 해제하면 기본 식당 랜덤 뽑기 후보에서 잠깐 제외돼요.
+      <div className="px-3 py-2 border-t border-stone-100 bg-stone-50/70 text-[10px] text-stone-400 shrink-0">
+        체크를 해제하면 기본 식당 랜덤 뽑기에서 제외돼요.
       </div>
     </div>
   );
