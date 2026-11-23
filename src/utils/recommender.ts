@@ -75,6 +75,15 @@ export function scoreMenus(
         return false;
       }
     }
+    if (context.seonPickActive) {
+      if (
+        menu.tags.includes('ramen') ||
+        /라[면멘]/.test(menu.name) ||
+        (menu.signatureMenus ?? []).some((s) => /라[면멘]/.test(s))
+      ) {
+        return false;
+      }
+    }
     if (
       context.selectedCategories.length > 0 &&
       !context.selectedCategories.includes(menu.category)

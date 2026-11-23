@@ -707,7 +707,7 @@ export const GENERAL_MENUS: MenuItem[] = [
     avgPrice: 11500,
     description: '진한 육수와 반숙 계란, 쌀쌀하거나 비 오는 날 혼밥으로도 최고',
     searchKeyword: '일본 라멘',
-    tags: ['soup', 'hot', 'rainy', 'noodle', 'hangover'],
+    tags: ['soup', 'hot', 'rainy', 'noodle', 'hangover', 'ramen'],
     soloFriendly: true,
     groupFriendly: true,
     fastServe: true,

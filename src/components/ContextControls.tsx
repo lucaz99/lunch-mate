@@ -378,15 +378,15 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Team Member Exclusion Picks */}
-          <div className="inline-flex items-center gap-1.5">
+          <div className="inline-flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-semibold text-stone-500">
               팀원 픽
             </span>
             <button
               type="button"
               onClick={() => onChange({ noPickActive: !context.noPickActive })}
-              title="마라탕·현대옥·매운맛 메뉴 제외"
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+              title="No픽: 마라탕·현대옥·매운맛 메뉴 제외"
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
                 context.noPickActive
                   ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                   : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
@@ -398,7 +398,7 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
                   context.noPickActive ? 'text-rose-100' : 'text-rose-500'
                 }`}
               >
-                매운맛·현대옥 제외
+                매운맛X
               </span>
             </button>
             <button
@@ -406,8 +406,8 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
               onClick={() =>
                 onChange({ ryeolPickActive: !context.ryeolPickActive })
               }
-              title="동남아 음식·향신료 강한 음식 제외"
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+              title="렬픽: 동남아 음식·향신료 강한 음식 제외"
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
                 context.ryeolPickActive
                   ? 'bg-teal-600 text-white border-teal-600 shadow-2xs'
                   : 'bg-teal-50/70 text-teal-700 border-teal-200 hover:bg-teal-100'
@@ -419,7 +419,28 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
                   context.ryeolPickActive ? 'text-teal-100' : 'text-teal-600'
                 }`}
               >
-                동남아·향신료 제외
+                향신료X
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({ seonPickActive: !context.seonPickActive })
+              }
+              title="선픽: 라면·라멘류 제외"
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+                context.seonPickActive
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                  : 'bg-indigo-50/70 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+              }`}
+            >
+              <span>🍜 선픽</span>
+              <span
+                className={`text-[10px] font-medium hidden sm:inline ${
+                  context.seonPickActive ? 'text-indigo-100' : 'text-indigo-500'
+                }`}
+              >
+                라면X
               </span>
             </button>
           </div>

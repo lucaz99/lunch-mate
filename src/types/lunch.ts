@@ -22,6 +22,7 @@ export type MenuTag =
   | 'light'
   | 'spicy'
   | 'aromatic'
+  | 'ramen'
   | 'hearty'
   | 'greasy'
   | 'noodle'
@@ -51,6 +52,7 @@ export interface LunchContext {
   hadCompanyDinner: boolean;
   noPickActive: boolean;
   ryeolPickActive: boolean;
+  seonPickActive: boolean;
   weatherFeel: WeatherFeel;
   weatherCondition: WeatherCondition;
   temperatureC: number | null;

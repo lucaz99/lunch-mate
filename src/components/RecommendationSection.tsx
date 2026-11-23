@@ -61,8 +61,10 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
           </h2>
         </div>
 
-        {(context.noPickActive || context.ryeolPickActive) && (
-          <div className="flex items-center gap-1.5 shrink-0">
+        {(context.noPickActive ||
+          context.ryeolPickActive ||
+          context.seonPickActive) && (
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
             {context.noPickActive && (
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
                 🚫 No픽 적용됨
@@ -71,6 +73,11 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
             {context.ryeolPickActive && (
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
                 🌿 렬픽 적용됨
+              </span>
+            )}
+            {context.seonPickActive && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                🍜 선픽 적용됨
               </span>
             )}
           </div>

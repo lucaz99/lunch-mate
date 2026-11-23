@@ -73,6 +73,7 @@ export function App() {
     hadCompanyDinner: false,
     noPickActive: false,
     ryeolPickActive: false,
+    seonPickActive: false,
     weatherFeel: 'mild',
     weatherCondition: 'clear',
     temperatureC: null,
