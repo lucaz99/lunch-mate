@@ -10,7 +10,6 @@ import {
   RotateCcw,
   Snowflake,
   Sparkles,
-  Star,
   Sun,
   Users,
   Wallet,
@@ -24,7 +23,6 @@ import {
   LunchContext,
   MealPace,
   MenuCategory,
-  SpotScope,
   WeatherCondition,
   WeatherFeel,
 } from '../types/lunch';
@@ -33,7 +31,6 @@ interface ContextControlsProps {
   context: LunchContext;
   liveWeather: LiveWeatherData | null;
   autoWeekendDetected: boolean;
-  activeFavoriteCount: number;
   onChange: (patch: Partial<LunchContext>) => void;
   onResetLiveWeather: () => void;
 }
@@ -119,7 +116,6 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
   context,
   liveWeather,
   autoWeekendDetected,
-  activeFavoriteCount,
   onChange,
   onResetLiveWeather,
 }) => {
@@ -133,49 +129,6 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
 
   return (
     <section className="bg-white rounded-3xl border border-stone-200/80 shadow-xs p-4 sm:p-6 space-y-5">
-      {/* Row 0: Recommendation Source Scope (Favorite Spots vs All vs General) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-4 border-b border-stone-100">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-amber-100 text-amber-700">
-            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-          </span>
-          <div>
-            <span className="text-xs font-extrabold text-stone-800">
-              추천 대상 선택
-            </span>
-            <span className="ml-2 text-[11px] text-stone-400 hidden sm:inline">
-              오른쪽 사이드바에서 기본 확정 식당을 켜고 끌 수 있어요
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl sm:w-auto">
-          {(
-            [
-              {
-                value: 'favorites',
-                label: `⭐ 기본 식당 (${activeFavoriteCount})`,
-              },
-              { value: 'all', label: '단골 + 일반' },
-              { value: 'general', label: '일반 메뉴만' },
-            ] as { value: SpotScope; label: string }[]
-          ).map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange({ spotScope: opt.value })}
-              className={`px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                context.spotScope === opt.value
-                  ? 'bg-white text-stone-900 shadow-2xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Row 1: Yesterday life condition toggles */}
       <div>
         <div className="flex items-center justify-between mb-2.5">

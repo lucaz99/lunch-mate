@@ -61,12 +61,6 @@ export function scoreMenus(
   }
 
   const filtered = menus.filter((menu) => {
-    if (context.spotScope === 'favorites' && !menu.isFavoriteSpot) {
-      return false;
-    }
-    if (context.spotScope === 'general' && menu.isFavoriteSpot) {
-      return false;
-    }
     if (
       context.selectedCategories.length > 0 &&
       !context.selectedCategories.includes(menu.category)
@@ -264,10 +258,7 @@ export function scoreMenus(
       }
     }
 
-    // Gentle variety jitter (+ slight preference for favorite spots in 'all' mode)
-    if (context.spotScope === 'all' && menu.isFavoriteSpot) {
-      score += 5;
-    }
+    // Gentle variety jitter
     score += deterministicJitter(menu.id, daySeed);
 
     if (matchReasons.length === 0) {

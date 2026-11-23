@@ -70,7 +70,6 @@ export function App() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
   const [context, setContext] = useState<LunchContext>({
-    spotScope: 'favorites',
     wasWeekendYesterday: autoWeekendDetected,
     hadCompanyDinner: false,
     weatherFeel: 'mild',
@@ -203,24 +202,27 @@ export function App() {
     [allFavoriteSpots, disabledSpotIds]
   );
 
-  // Full scored favorite spots for the right sidebar (ignores category filter & disabled filter so user sees all spots)
+  // Full scored favorite spots for the right sidebar (ignores category filter so all spots stay visible)
   const sidebarFavoriteSpots = useMemo(() => {
     const sidebarContext: LunchContext = {
       ...context,
-      spotScope: 'favorites',
       selectedCategories: [],
     };
     return scoreMenus(allFavoriteSpots, sidebarContext, history, shuffleSeed);
   }, [allFavoriteSpots, context, history, shuffleSeed]);
 
-  // Active pool for main recommendations & random picker (respects disabledSpotIds)
-  const scoredMenus = useMemo(() => {
-    const activePool = [
-      ...allFavoriteSpots.filter((s) => !disabledSpotIds.includes(s.id)),
-      ...GENERAL_MENUS,
-    ];
-    return scoreMenus(activePool, context, history, shuffleSeed);
-  }, [allFavoriteSpots, disabledSpotIds, context, history, shuffleSeed]);
+  // Enabled favorite spots for the Random Picker's "기본 식당" pool
+  const enabledFavoriteSpots = useMemo(
+    () =>
+      sidebarFavoriteSpots.filter((s) => !disabledSpotIds.includes(s.id)),
+    [sidebarFavoriteSpots, disabledSpotIds]
+  );
+
+  // Main recommendations: strictly food menu categories/dishes only (never mixed with specific restaurants)
+  const scoredMenus = useMemo(
+    () => scoreMenus(GENERAL_MENUS, context, history, shuffleSeed),
+    [context, history, shuffleSeed]
+  );
 
   const todayStr = getTodayDateString();
   const todayConfirmedMenuId = useMemo(() => {
@@ -367,7 +369,6 @@ export function App() {
                 context={context}
                 liveWeather={liveWeather}
                 autoWeekendDetected={autoWeekendDetected}
-                activeFavoriteCount={activeFavoriteCount}
                 onChange={(patch) =>
                   setContext((prev) => ({ ...prev, ...patch }))
                 }
@@ -390,6 +391,7 @@ export function App() {
             {activeTab === 'picker' && (
               <RandomPicker
                 scoredMenus={scoredMenus}
+                favoriteSpots={enabledFavoriteSpots}
                 locationName={location.name}
                 onConfirmMenu={handleConfirmMenu}
               />

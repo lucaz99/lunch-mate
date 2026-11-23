@@ -17,25 +17,31 @@ import { ScoredMenu } from '../types/lunch';
 
 interface RandomPickerProps {
   scoredMenus: ScoredMenu[];
+  favoriteSpots: ScoredMenu[];
   locationName: string;
   onConfirmMenu: (menu: ScoredMenu) => void;
 }
 
 type PickerMode = 'slot' | 'swipe';
+type PickerTarget = 'menus' | 'spots';
 
 export const RandomPicker: React.FC<RandomPickerProps> = ({
   scoredMenus,
+  favoriteSpots,
   locationName,
   onConfirmMenu,
 }) => {
   const [mode, setMode] = useState<PickerMode>('slot');
+  const [target, setTarget] = useState<PickerTarget>('menus');
 
-  // Pool: prefer non-recently-eaten top 18 menus (covers all 18 favorite spots)
+  const activeSource = target === 'menus' ? scoredMenus : favoriteSpots;
+
+  // Pool: prefer non-recently-eaten top 18 items from the chosen pool (never mixed)
   const candidatePool = useMemo(() => {
-    const fresh = scoredMenus.filter((m) => !m.isRecentlyEaten);
-    const source = fresh.length >= 3 ? fresh : scoredMenus;
+    const fresh = activeSource.filter((m) => !m.isRecentlyEaten);
+    const source = fresh.length >= 3 ? fresh : activeSource;
     return source.slice(0, 18);
-  }, [scoredMenus]);
+  }, [activeSource]);
 
   // Slot Machine state
   const [spinning, setSpinning] = useState(false);
@@ -138,40 +144,86 @@ export const RandomPicker: React.FC<RandomPickerProps> = ({
             결정 장애 해결기
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-            오늘 조건에 맞는 상위 {candidatePool.length}개 후보 중에서 운명에 맡겨보세요!
+            {target === 'menus'
+              ? `오늘 조건에 맞는 음식 종류 상위 ${candidatePool.length}개 중에서 뽑아보세요!`
+              : `오른쪽 사이드바에서 선택된 기본 확정 식당 ${candidatePool.length}곳 중에서 뽑아보세요!`}
           </p>
         </div>
 
-        <div className="inline-flex bg-stone-100 p-1 rounded-2xl self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setMode('slot')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-              mode === 'slot'
-                ? 'bg-white text-stone-900 shadow-xs'
-                : 'text-stone-500 hover:text-stone-800'
-            }`}
-          >
-            <Dices className="w-3.5 h-3.5" />
-            슬롯 뽑기
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('swipe')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-              mode === 'swipe'
-                ? 'bg-white text-stone-900 shadow-xs'
-                : 'text-stone-500 hover:text-stone-800'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            카드 스와이프
-            {shortlistedMenus.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-[#E85D2A] text-white text-[10px]">
-                {shortlistedMenus.length}
-              </span>
-            )}
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Pool Target Switch (Menus vs Favorite Spots — strictly separate) */}
+          <div className="inline-flex bg-stone-100 p-1 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => {
+                setTarget('menus');
+                setSlotIndex(0);
+                setWinner(null);
+                setSwipeIdx(0);
+                setLikedIds([]);
+                setPassedIds([]);
+                setUseShortlistOnly(false);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                target === 'menus'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              🍽️ 음식 종류
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTarget('spots');
+                setSlotIndex(0);
+                setWinner(null);
+                setSwipeIdx(0);
+                setLikedIds([]);
+                setPassedIds([]);
+                setUseShortlistOnly(false);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                target === 'spots'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              ⭐ 기본 식당 ({favoriteSpots.length})
+            </button>
+          </div>
+
+          <div className="inline-flex bg-stone-100 p-1 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setMode('slot')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                mode === 'slot'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Dices className="w-3.5 h-3.5" />
+              슬롯
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('swipe')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                mode === 'swipe'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              스와이프
+              {shortlistedMenus.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-[#E85D2A] text-white text-[10px]">
+                  {shortlistedMenus.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

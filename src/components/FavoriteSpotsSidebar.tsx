@@ -396,7 +396,7 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
 
       {/* Footer Tip */}
       <div className="px-4 py-2.5 border-t border-stone-100 bg-stone-50/70 text-[11px] text-stone-400 shrink-0">
-        체크를 해제하면 오늘 추천·뽑기에서 잠깐 제외돼요.
+        체크를 해제하면 기본 식당 랜덤 뽑기 후보에서 잠깐 제외돼요.
       </div>
     </div>
   );

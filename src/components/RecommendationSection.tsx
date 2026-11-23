@@ -6,7 +6,6 @@ import {
   Flame,
   Shuffle,
   Sparkles,
-  Star,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -94,13 +93,8 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
           <div className="space-y-3.5 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E85D2A] text-white text-xs font-bold">
-                <Flame className="w-3.5 h-3.5" /> 오늘의 1순위 추천
+                <Flame className="w-3.5 h-3.5" /> 오늘의 1순위 메뉴
               </span>
-              {hero.isFavoriteSpot && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-300/80 text-amber-900 text-xs font-bold">
-                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> 우리 단골집
-                </span>
-              )}
               <span className="px-2.5 py-1 rounded-full bg-white border border-stone-200 text-xs font-semibold text-stone-700">
                 {hero.category}
               </span>
@@ -125,11 +119,6 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
                 <p className="text-sm text-stone-600 mt-1 leading-relaxed">
                   {hero.description}
                 </p>
-                {hero.signatureMenus && hero.signatureMenus.length > 0 && (
-                  <p className="text-xs font-semibold text-[#C2410C] mt-1.5">
-                    대표 메뉴: {hero.signatureMenus.join(' · ')}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -239,12 +228,6 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
                           <span className="text-[11px] font-extrabold text-stone-400">
                             #{rank}
                           </span>
-                          {menu.isFavoriteSpot && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                              <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                              단골
-                            </span>
-                          )}
                           <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-600">
                             {menu.category}
                           </span>
@@ -272,12 +255,6 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
                   <p className="text-xs text-stone-500 leading-relaxed line-clamp-2">
                     {menu.description}
                   </p>
-
-                  {menu.signatureMenus && menu.signatureMenus.length > 0 && (
-                    <p className="text-[11px] font-semibold text-stone-700 truncate">
-                      🍽️ {menu.signatureMenus.join(' · ')}
-                    </p>
-                  )}
 
                   <div className="flex flex-wrap gap-1">
                     {menu.matchReasons.slice(0, 2).map((reason) => (

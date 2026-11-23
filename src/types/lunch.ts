@@ -10,8 +10,6 @@ export type DiningCompanion = 'solo' | 'colleagues' | 'team';
 
 export type MealPace = 'fast' | 'normal' | 'relaxed';
 
-export type SpotScope = 'favorites' | 'all' | 'general';
-
 export type ActiveTab = 'recommend' | 'picker' | 'history';
 
 export type MenuTag =
@@ -48,7 +46,6 @@ export interface MenuItem {
 }
 
 export interface LunchContext {
-  spotScope: SpotScope;
   wasWeekendYesterday: boolean;
   hadCompanyDinner: boolean;
   weatherFeel: WeatherFeel;
