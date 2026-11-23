@@ -400,29 +400,39 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              excludeRecentDays:
-                context.excludeRecentDays === 0
-                  ? 3
-                  : context.excludeRecentDays === 3
-                    ? 5
-                    : 0,
-            })
-          }
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition cursor-pointer ${
-            context.excludeRecentDays > 0
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-stone-50 border-stone-200 text-stone-500'
-          }`}
-        >
-          <History className="w-3.5 h-3.5" />
-          {context.excludeRecentDays > 0
-            ? `최근 ${context.excludeRecentDays}일 중복 제외 ON`
-            : '중복 제외 OFF'}
-        </button>
+        <div className="inline-flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-500">
+            <History className="w-3.5 h-3.5" />
+            중복 제외
+          </span>
+          <div className="inline-flex items-center gap-0.5 bg-stone-100 p-0.5 rounded-xl border border-stone-200/70">
+            {(
+              [
+                { days: 3, label: '최근 3일' },
+                { days: 5, label: '최근 5일' },
+                { days: 0, label: 'OFF' },
+              ] as const
+            ).map((opt) => {
+              const active = context.excludeRecentDays === opt.days;
+              return (
+                <button
+                  key={opt.days}
+                  type="button"
+                  onClick={() => onChange({ excludeRecentDays: opt.days })}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                    active
+                      ? opt.days > 0
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : 'bg-stone-800 text-white shadow-2xs'
+                      : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );
