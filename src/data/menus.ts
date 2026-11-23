@@ -354,6 +354,35 @@ export const FAVORITE_SPOTS: MenuItem[] = [
     isFavoriteSpot: true,
     signatureMenus: ['한우수육칼국수', '사골칼국수', '한우 얼큰국밥'],
   },
+  {
+    id: 'spot-homeplus-foodcourt',
+    name: '홈플러스 강서점 1층 푸드코트',
+    emoji: '🏬',
+    category: '한식',
+    priceRange: '10kTo15k',
+    avgPrice: 10500,
+    description:
+      '도보 3분 실내 푸드코트! 팀원마다 한식·중식·쌀국수·분식 등 취향대로 골라 먹기 최고',
+    searchKeyword: '홈플러스 강서점',
+    tags: ['hot', 'cool', 'light', 'hearty', 'rainy', 'mondayBoost', 'rice'],
+    soloFriendly: true,
+    groupFriendly: true,
+    fastServe: true,
+    relaxedMood: true,
+    kcalApprox: 650,
+    isFavoriteSpot: true,
+    signatureMenus: [
+      '채선당 가마솥밥',
+      '전주비빔밥',
+      '홍콩반점',
+      '홍대쌀국수',
+      '샤브미',
+      '떡장인방앗간',
+    ],
+    lat: 37.558418,
+    lon: 126.854838,
+    address: '서울 강서구 화곡로 398 (1층)',
+  },
 ];
 
 export const GENERAL_MENUS: MenuItem[] = [
@@ -796,6 +825,22 @@ export const GENERAL_MENUS: MenuItem[] = [
   },
 
   // 양식
+  {
+    id: 'western-tonkatsu',
+    name: '경양식 왕돈까스',
+    emoji: '🍽️',
+    category: '양식',
+    priceRange: '10kTo15k',
+    avgPrice: 12000,
+    description: '고소한 크림스프와 달콤진한 데미글라스 소스가 어우러진 추억의 경양식 돈까스',
+    searchKeyword: '경양식 돈까스',
+    tags: ['hearty', 'greasy', 'mondayBoost'],
+    soloFriendly: true,
+    groupFriendly: true,
+    fastServe: true,
+    relaxedMood: true,
+    kcalApprox: 830,
+  },
   {
     id: 'pasta',
     name: '파스타 (오일·크림·토마토)',
