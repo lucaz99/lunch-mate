@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   Plus,
   Search,
@@ -60,9 +58,6 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortByScore, setSortByScore] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showAllSpots, setShowAllSpots] = useState(false);
-
-  const DEFAULT_VISIBLE_COUNT = 7;
 
   // New custom spot form state
   const [newName, setNewName] = useState('');
@@ -89,13 +84,6 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
     }
     return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }, [favoriteSpots, searchQuery, sortByScore]);
-
-  const isSearching = searchQuery.trim().length > 0;
-  const visibleSpots =
-    showAllSpots || isSearching
-      ? displayedSpots
-      : displayedSpots.slice(0, DEFAULT_VISIBLE_COUNT);
-  const remainingCount = displayedSpots.length - visibleSpots.length;
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,14 +254,14 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
         )}
       </div>
 
-      {/* Scrollable Restaurant List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {visibleSpots.length === 0 ? (
+      {/* Scrollable Restaurant List (~7 items tall viewport, scroll for all spots) */}
+      <div className="max-h-[516px] overflow-y-auto p-2 space-y-1">
+        {displayedSpots.length === 0 ? (
           <div className="py-8 text-center text-xs text-stone-400">
             검색 결과가 없어요.
           </div>
         ) : (
-          visibleSpots.map((spot) => {
+          displayedSpots.map((spot) => {
             const isDisabled = disabledSpotIds.includes(spot.id);
             const isConfirmed = todayConfirmedMenuId === spot.id;
             const isCustom = customSpotIds.has(spot.id);
@@ -403,25 +391,6 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
               </div>
             );
           })
-        )}
-
-        {!isSearching && displayedSpots.length > DEFAULT_VISIBLE_COUNT && (
-          <button
-            type="button"
-            onClick={() => setShowAllSpots((prev) => !prev)}
-            className="w-full py-1.5 mt-1 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-700 text-[11px] font-bold inline-flex items-center justify-center gap-1 transition cursor-pointer"
-          >
-            {showAllSpots ? (
-              <>
-                7개만 보기 <ChevronUp className="w-3.5 h-3.5" />
-              </>
-            ) : (
-              <>
-                나머지 {remainingCount}곳 더 보기{' '}
-                <ChevronDown className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
         )}
       </div>
 
