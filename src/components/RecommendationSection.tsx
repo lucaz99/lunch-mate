@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import {
   CheckCircle2,
-  Dices,
   ExternalLink,
   Flame,
-  Shuffle,
   Sparkles,
   ChevronDown,
   ChevronUp,
@@ -22,8 +20,6 @@ interface RecommendationSectionProps {
   locationName: string;
   todayConfirmedMenuId: string | null;
   onConfirmMenu: (menu: ScoredMenu) => void;
-  onShuffle: () => void;
-  onOpenPicker: () => void;
 }
 
 export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
@@ -32,8 +28,6 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
   locationName,
   todayConfirmedMenuId,
   onConfirmMenu,
-  onShuffle,
-  onOpenPicker,
 }) => {
   const [showAll, setShowAll] = useState(false);
 
@@ -55,36 +49,15 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
 
   return (
     <section className="space-y-3">
-      {/* Compact Contextual Headline + Quick Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100/80 text-[#C2410C] text-[11px] font-bold shrink-0">
-            <Sparkles className="w-3 h-3" />
-            맞춤 분석
-          </span>
-          <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-stone-900 truncate">
-            {headline.title}
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={onShuffle}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-stone-200 hover:border-stone-300 text-[11px] font-semibold text-stone-700 shadow-2xs transition cursor-pointer"
-          >
-            <Shuffle className="w-3 h-3" />
-            순서 바꾸기
-          </button>
-          <button
-            type="button"
-            onClick={onOpenPicker}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-[11px] font-semibold text-white shadow-2xs transition cursor-pointer"
-          >
-            <Dices className="w-3 h-3" />
-            랜덤 뽑기
-          </button>
-        </div>
+      {/* Compact Contextual Headline */}
+      <div className="flex items-center gap-2 px-0.5 min-w-0">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100/80 text-[#C2410C] text-[11px] font-bold shrink-0">
+          <Sparkles className="w-3 h-3" />
+          맞춤 분석
+        </span>
+        <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-stone-900 truncate">
+          {headline.title}
+        </h2>
       </div>
 
       {/* Compact Hero #1 Best Recommendation Banner */}

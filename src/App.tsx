@@ -39,7 +39,6 @@ export function App() {
   const autoWeekendDetected = useMemo(() => isYesterdayWeekend(), []);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('recommend');
-  const [shuffleSeed, setShuffleSeed] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -208,8 +207,8 @@ export function App() {
       ...context,
       selectedCategories: [],
     };
-    return scoreMenus(allFavoriteSpots, sidebarContext, history, shuffleSeed);
-  }, [allFavoriteSpots, context, history, shuffleSeed]);
+    return scoreMenus(allFavoriteSpots, sidebarContext, history);
+  }, [allFavoriteSpots, context, history]);
 
   // Enabled favorite spots for the Random Picker's "기본 식당" pool
   const enabledFavoriteSpots = useMemo(
@@ -220,8 +219,8 @@ export function App() {
 
   // Main recommendations: strictly food menu categories/dishes only (never mixed with specific restaurants)
   const scoredMenus = useMemo(
-    () => scoreMenus(GENERAL_MENUS, context, history, shuffleSeed),
-    [context, history, shuffleSeed]
+    () => scoreMenus(GENERAL_MENUS, context, history),
+    [context, history]
   );
 
   const todayStr = getTodayDateString();
@@ -383,8 +382,6 @@ export function App() {
                 locationName={location.name}
                 todayConfirmedMenuId={todayConfirmedMenuId}
                 onConfirmMenu={handleConfirmMenu}
-                onShuffle={() => setShuffleSeed((s) => s + 1)}
-                onOpenPicker={() => setActiveTab('picker')}
               />
             )}
 
