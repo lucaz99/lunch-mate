@@ -81,29 +81,24 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-[#FAF8F4]/92 backdrop-blur-md border-b border-stone-200/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2">
         {/* Left: Brand */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-[#E85D2A] text-white flex items-center justify-center shadow-sm shadow-[#E85D2A]/25">
-            <UtensilsCrossed className="w-5 h-5" />
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[#E85D2A] text-white flex items-center justify-center shadow-sm shadow-[#E85D2A]/25">
+            <UtensilsCrossed className="w-4 h-4" />
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-lg font-extrabold tracking-tight text-stone-900">
-                오늘점심
-              </h1>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200/80 text-stone-700">
-                {dateLabel}
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-base font-extrabold tracking-tight text-stone-900">
+              오늘점심
+            </h1>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200/80 text-stone-700">
+              {dateLabel}
+            </span>
+            {autoWeekendDetected && (
+              <span className="hidden xl:inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                주말 직후
               </span>
-              {autoWeekendDetected && (
-                <span className="hidden xl:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                  주말 직후
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-stone-500 hidden xl:block">
-              위치·날씨·컨디션 맞춤 점심 가이드
-            </p>
+            )}
           </div>
         </div>
 

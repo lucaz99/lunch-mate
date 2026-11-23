@@ -124,9 +124,9 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="bg-white rounded-3xl border border-stone-200/80 shadow-xs flex flex-col max-h-[calc(100vh-5.5rem)] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs flex flex-col max-h-[calc(100vh-4.25rem)] overflow-hidden">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-stone-100 space-y-3 shrink-0">
+      <div className="p-3 border-b border-stone-100 space-y-2 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -255,9 +255,9 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
       </div>
 
       {/* Scrollable Restaurant List */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         {displayedSpots.length === 0 ? (
-          <div className="py-10 text-center text-xs text-stone-400">
+          <div className="py-8 text-center text-xs text-stone-400">
             검색 결과가 없어요.
           </div>
         ) : (
@@ -269,7 +269,7 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
             return (
               <div
                 key={spot.id}
-                className={`group rounded-2xl border p-2.5 transition ${
+                className={`group rounded-xl border p-2 transition ${
                   isConfirmed
                     ? 'bg-emerald-50/70 border-emerald-300'
                     : isDisabled
@@ -404,8 +404,8 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
   return (
     <>
       {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:block w-80 shrink-0">
-        <div className="sticky top-[4.75rem]">{sidebarContent}</div>
+      <aside className="hidden lg:block w-72 shrink-0">
+        <div className="sticky top-[3.5rem]">{sidebarContent}</div>
       </aside>
 
       {/* Mobile Slide-over Drawer */}

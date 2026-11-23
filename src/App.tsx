@@ -347,10 +347,10 @@ export function App() {
         onRefreshWeather={() => loadWeatherForCoords(location.lat, location.lon)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-6">
-        <div className="flex flex-col lg:flex-row items-start gap-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-5 py-3">
+        <div className="flex flex-col lg:flex-row items-start gap-4">
           {/* Left Main Column */}
-          <div className="flex-1 min-w-0 w-full space-y-6">
+          <div className="flex-1 min-w-0 w-full space-y-3.5">
             {/* Mobile-only button to open Favorite Spots Drawer */}
             <div className="flex lg:hidden justify-end">
               <button
@@ -428,7 +428,7 @@ export function App() {
         </div>
       </main>
 
-      <footer className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 text-center text-xs text-stone-400">
+      <footer className="max-w-[1440px] w-full mx-auto px-4 sm:px-5 py-2.5 text-center text-[11px] text-stone-400">
         실시간 날씨 데이터: Open-Meteo · 주변 식당 검색: 네이버 지도 &amp; 카카오맵 바로가기
       </footer>
 
