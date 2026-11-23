@@ -128,17 +128,17 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
   };
 
   return (
-    <section className="bg-white rounded-2xl border border-stone-200/80 shadow-xs p-3 sm:p-3.5 space-y-2.5">
+    <section className="bg-white rounded-2xl border border-stone-200/80 shadow-xs p-3.5 sm:p-4 space-y-3">
       {/* Row 1: Yesterday life condition toggles + Weather simulator */}
-      <div className="flex flex-col xl:flex-row xl:items-center gap-2.5">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-3">
         {/* Two compact condition toggles */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 xl:w-[460px] shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 xl:w-[470px] shrink-0">
           <button
             type="button"
             onClick={() =>
               onChange({ wasWeekendYesterday: !context.wasWeekendYesterday })
             }
-            className={`flex items-center justify-between px-3 py-2 rounded-xl border text-left transition cursor-pointer ${
+            className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition cursor-pointer ${
               context.wasWeekendYesterday
                 ? 'bg-amber-50/90 border-amber-300'
                 : 'bg-stone-50/70 border-stone-200 hover:border-stone-300'
@@ -188,7 +188,7 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
             onClick={() =>
               onChange({ hadCompanyDinner: !context.hadCompanyDinner })
             }
-            className={`flex items-center justify-between px-3 py-2 rounded-xl border text-left transition cursor-pointer ${
+            className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition cursor-pointer ${
               context.hadCompanyDinner
                 ? 'bg-orange-50/90 border-[#E85D2A]/50'
                 : 'bg-stone-50/70 border-stone-200 hover:border-stone-300'
@@ -275,7 +275,7 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
       </div>
 
       {/* Row 2: Dining constraints (Budget, Companion, Pace) */}
-      <div className="pt-2 border-t border-stone-100 grid grid-cols-1 md:grid-cols-3 gap-2.5">
+      <div className="pt-2.5 border-t border-stone-100 grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold text-stone-500 flex items-center gap-1 shrink-0 w-12">
             <Wallet className="w-3 h-3" /> 예산
@@ -344,7 +344,7 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
       </div>
 
       {/* Row 3: Category filter & Explicit Recent Duplicate Exclusion buttons */}
-      <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-2.5 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"

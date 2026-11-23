@@ -346,10 +346,10 @@ export function App() {
         onRefreshWeather={() => loadWeatherForCoords(location.lat, location.lon)}
       />
 
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-5 py-3">
-        <div className="flex flex-col lg:flex-row items-start gap-4">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-5 py-4">
+        <div className="flex flex-col lg:flex-row items-stretch gap-5">
           {/* Left Main Column */}
-          <div className="flex-1 min-w-0 w-full space-y-3.5">
+          <div className="flex-1 min-w-0 w-full space-y-4">
             {/* Mobile-only button to open Favorite Spots Drawer */}
             <div className="flex lg:hidden justify-end">
               <button

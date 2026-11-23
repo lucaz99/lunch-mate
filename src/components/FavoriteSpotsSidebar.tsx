@@ -124,9 +124,9 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs flex flex-col max-h-[calc(100vh-4.25rem)] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs flex flex-col h-full overflow-hidden">
       {/* Sidebar Header */}
-      <div className="p-3 border-b border-stone-100 space-y-2 shrink-0">
+      <div className="p-3.5 border-b border-stone-100 space-y-2.5 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -254,8 +254,8 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
         )}
       </div>
 
-      {/* Scrollable Restaurant List (~7 items tall viewport, scroll for all spots) */}
-      <div className="max-h-[516px] overflow-y-auto p-2 space-y-1">
+      {/* Scrollable Restaurant List (flex-1 aligns sidebar bottom flush with recommended menu row) */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-1.5">
         {displayedSpots.length === 0 ? (
           <div className="py-8 text-center text-xs text-stone-400">
             검색 결과가 없어요.
@@ -269,13 +269,12 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
             return (
               <div
                 key={spot.id}
-                className={`group rounded-xl border px-2 py-1.5 transition ${
-                  isConfirmed
-                    ? 'bg-emerald-50/70 border-emerald-300'
-                    : isDisabled
-                      ? 'bg-stone-50/70 border-stone-200/60 opacity-55'
-                      : 'bg-white border-stone-200/80 hover:border-stone-300 hover:shadow-2xs'
-                }`}
+                className={`group rounded-xl border px-2 py-1.5 transition ${isConfirmed
+                  ? 'bg-emerald-50/70 border-emerald-300'
+                  : isDisabled
+                    ? 'bg-stone-50/70 border-stone-200/60 opacity-55'
+                    : 'bg-white border-stone-200/80 hover:border-stone-300 hover:shadow-2xs'
+                  }`}
               >
                 <div className="flex items-start gap-2">
                   {/* Include / Exclude checkbox */}
@@ -287,11 +286,10 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
                         ? '클릭하여 오늘 추천 후보에 다시 포함'
                         : '클릭하여 오늘 추천 후보에서 일시 제외'
                     }
-                    className={`mt-0.5 w-4.5 h-4.5 rounded-md border flex items-center justify-center shrink-0 transition cursor-pointer ${
-                      isDisabled
-                        ? 'bg-white border-stone-300 text-transparent'
-                        : 'bg-[#E85D2A] border-[#E85D2A] text-white'
-                    }`}
+                    className={`mt-0.5 w-4.5 h-4.5 rounded-md border flex items-center justify-center shrink-0 transition cursor-pointer ${isDisabled
+                      ? 'bg-white border-stone-300 text-transparent'
+                      : 'bg-[#E85D2A] border-[#E85D2A] text-white'
+                      }`}
                   >
                     <Check className="w-3 h-3 stroke-[3]" />
                   </button>
@@ -304,21 +302,19 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
                           {spot.emoji}
                         </span>
                         <span
-                          className={`text-xs font-extrabold truncate ${
-                            isDisabled
-                              ? 'line-through text-stone-400'
-                              : 'text-stone-900'
-                          }`}
+                          className={`text-xs font-extrabold truncate ${isDisabled
+                            ? 'line-through text-stone-400'
+                            : 'text-stone-900'
+                            }`}
                         >
                           {spot.name}
                         </span>
                       </div>
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                          spot.isRecentlyEaten
-                            ? 'bg-stone-200 text-stone-600'
-                            : 'bg-orange-50 text-[#C2410C]'
-                        }`}
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${spot.isRecentlyEaten
+                          ? 'bg-stone-200 text-stone-600'
+                          : 'bg-orange-50 text-[#C2410C]'
+                          }`}
                       >
                         {spot.isRecentlyEaten
                           ? spot.lastEatenDaysAgo === 0
@@ -376,11 +372,10 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
                       <button
                         type="button"
                         onClick={() => onConfirmSpot(spot)}
-                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                          isConfirmed
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-stone-100 hover:bg-stone-900 text-stone-700 hover:text-white'
-                        }`}
+                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${isConfirmed
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-stone-100 hover:bg-stone-900 text-stone-700 hover:text-white'
+                          }`}
                       >
                         <CheckCircle2 className="w-2.5 h-2.5" />
                         {isConfirmed ? '확정됨' : '오늘 확정'}
@@ -403,9 +398,13 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:block w-72 shrink-0">
-        <div className="sticky top-[3.5rem]">{sidebarContent}</div>
+      {/* Desktop Sidebar aligned flush with left column bottom */}
+      <aside className="hidden lg:block w-72 shrink-0 relative min-h-[540px]">
+        <div className="absolute inset-0">
+          <div className="sticky top-[3.75rem] h-full max-h-[calc(100vh-5rem)]">
+            {sidebarContent}
+          </div>
+        </div>
       </aside>
 
       {/* Mobile Slide-over Drawer */}
@@ -415,7 +414,7 @@ export const FavoriteSpotsSidebar: React.FC<FavoriteSpotsSidebarProps> = ({
             className="fixed inset-0 bg-stone-950/40 backdrop-blur-[1px]"
             onClick={onCloseMobile}
           />
-          <div className="relative z-10 w-[88vw] max-w-sm h-full p-3 flex flex-col justify-center animate-pop-in">
+          <div className="relative z-10 w-[88vw] max-w-sm h-[88vh] my-auto p-3 flex flex-col animate-pop-in">
             {sidebarContent}
           </div>
         </div>
