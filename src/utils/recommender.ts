@@ -61,6 +61,20 @@ export function scoreMenus(
   }
 
   const filtered = menus.filter((menu) => {
+    if (context.noPickActive) {
+      if (
+        menu.id === 'malatang' ||
+        menu.id === 'spot-hyundaiok' ||
+        menu.tags.includes('spicy')
+      ) {
+        return false;
+      }
+    }
+    if (context.ryeolPickActive) {
+      if (menu.tags.includes('aromatic')) {
+        return false;
+      }
+    }
     if (
       context.selectedCategories.length > 0 &&
       !context.selectedCategories.includes(menu.category)

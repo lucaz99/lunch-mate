@@ -50,14 +50,31 @@ export const RecommendationSection: React.FC<RecommendationSectionProps> = ({
   return (
     <section className="space-y-3.5">
       {/* Compact Contextual Headline */}
-      <div className="flex items-center gap-2 px-0.5 min-w-0">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100/80 text-[#C2410C] text-[11px] font-bold shrink-0">
-          <Sparkles className="w-3 h-3" />
-          맞춤 분석
-        </span>
-        <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-stone-900 truncate">
-          {headline.title}
-        </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100/80 text-[#C2410C] text-[11px] font-bold shrink-0">
+            <Sparkles className="w-3 h-3" />
+            맞춤 분석
+          </span>
+          <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-stone-900 truncate">
+            {headline.title}
+          </h2>
+        </div>
+
+        {(context.noPickActive || context.ryeolPickActive) && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {context.noPickActive && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                🚫 No픽 적용됨
+              </span>
+            )}
+            {context.ryeolPickActive && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                🌿 렬픽 적용됨
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Hero #1 Best Recommendation Banner */}

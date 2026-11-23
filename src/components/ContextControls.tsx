@@ -376,37 +376,88 @@ export const ContextControls: React.FC<ContextControlsProps> = ({
           })}
         </div>
 
-        <div className="inline-flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500">
-            <History className="w-3 h-3" />
-            중복 제외
-          </span>
-          <div className="inline-flex items-center gap-0.5 bg-stone-100 p-0.5 rounded-lg border border-stone-200/70">
-            {(
-              [
-                { days: 3, label: '최근 3일' },
-                { days: 5, label: '최근 5일' },
-                { days: 0, label: 'OFF' },
-              ] as const
-            ).map((opt) => {
-              const active = context.excludeRecentDays === opt.days;
-              return (
-                <button
-                  key={opt.days}
-                  type="button"
-                  onClick={() => onChange({ excludeRecentDays: opt.days })}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
-                    active
-                      ? opt.days > 0
-                        ? 'bg-emerald-600 text-white shadow-2xs'
-                        : 'bg-stone-800 text-white shadow-2xs'
-                      : 'text-stone-500 hover:text-stone-800'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Team Member Exclusion Picks */}
+          <div className="inline-flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-stone-500">
+              팀원 픽
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange({ noPickActive: !context.noPickActive })}
+              title="마라탕·현대옥·매운맛 메뉴 제외"
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+                context.noPickActive
+                  ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                  : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
+              }`}
+            >
+              <span>🚫 No픽</span>
+              <span
+                className={`text-[10px] font-medium hidden sm:inline ${
+                  context.noPickActive ? 'text-rose-100' : 'text-rose-500'
+                }`}
+              >
+                매운맛·현대옥 제외
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({ ryeolPickActive: !context.ryeolPickActive })
+              }
+              title="동남아 음식·향신료 강한 음식 제외"
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition cursor-pointer ${
+                context.ryeolPickActive
+                  ? 'bg-teal-600 text-white border-teal-600 shadow-2xs'
+                  : 'bg-teal-50/70 text-teal-700 border-teal-200 hover:bg-teal-100'
+              }`}
+            >
+              <span>🌿 렬픽</span>
+              <span
+                className={`text-[10px] font-medium hidden sm:inline ${
+                  context.ryeolPickActive ? 'text-teal-100' : 'text-teal-600'
+                }`}
+              >
+                동남아·향신료 제외
+              </span>
+            </button>
+          </div>
+
+          <div className="hidden sm:block w-px h-4 bg-stone-200" />
+
+          <div className="inline-flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500">
+              <History className="w-3 h-3" />
+              중복 제외
+            </span>
+            <div className="inline-flex items-center gap-0.5 bg-stone-100 p-0.5 rounded-lg border border-stone-200/70">
+              {(
+                [
+                  { days: 3, label: '최근 3일' },
+                  { days: 5, label: '최근 5일' },
+                  { days: 0, label: 'OFF' },
+                ] as const
+              ).map((opt) => {
+                const active = context.excludeRecentDays === opt.days;
+                return (
+                  <button
+                    key={opt.days}
+                    type="button"
+                    onClick={() => onChange({ excludeRecentDays: opt.days })}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                      active
+                        ? opt.days > 0
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : 'bg-stone-800 text-white shadow-2xs'
+                        : 'text-stone-500 hover:text-stone-800'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

@@ -71,6 +71,8 @@ export function App() {
   const [context, setContext] = useState<LunchContext>({
     wasWeekendYesterday: autoWeekendDetected,
     hadCompanyDinner: false,
+    noPickActive: false,
+    ryeolPickActive: false,
     weatherFeel: 'mild',
     weatherCondition: 'clear',
     temperatureC: null,

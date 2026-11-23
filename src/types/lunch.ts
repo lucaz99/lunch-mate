@@ -21,6 +21,7 @@ export type MenuTag =
   | 'mondayBoost'
   | 'light'
   | 'spicy'
+  | 'aromatic'
   | 'hearty'
   | 'greasy'
   | 'noodle'
@@ -48,6 +49,8 @@ export interface MenuItem {
 export interface LunchContext {
   wasWeekendYesterday: boolean;
   hadCompanyDinner: boolean;
+  noPickActive: boolean;
+  ryeolPickActive: boolean;
   weatherFeel: WeatherFeel;
   weatherCondition: WeatherCondition;
   temperatureC: number | null;
